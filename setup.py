@@ -17,17 +17,17 @@ setup(
     license='BSD-3-Clause',
     packages=['dqm_client', "dqm_client.tests"],
     # Optional include package data to ship with your package
-    package_data={'dqm_client': []  # + ["data/*.dat"]
-                  },
+    package_data={
+        'dqm_client': []  # + ["data/*.dat"]
+    },
+    install_requires=["numpy"],
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     # author_email='me@place.org',      # Author email
     # url='http://www.my_package.com',  # Website
-    # install_requires=[],              # Required packages, pulls from pip if needed; do not use for Conda deployment
     # platforms=['Linux',
     #            'Mac OS-X',
     #            'Unix',
     #            'Windows'],            # Valid platforms your code works on, adjust to your flavor
-    # zip_safe=False,                   # Compress final package or not
+    zip_safe=True,                   # Compress final package or not
     # python_requires=">=3.5",          # Python version restrictions
-
 )

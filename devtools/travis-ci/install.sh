@@ -15,7 +15,7 @@ if [ "$TRAVIS_OS_NAME" == "osx" ]; then
 fi
 pip install --upgrade pip setuptools
 pip install pytest pytest-cov
-pip install numpy
+pip install numpy pandas
 
 # Restore original directory
 popd
