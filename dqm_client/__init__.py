@@ -8,7 +8,7 @@ A front-end client to DQM
 from __future__ import absolute_import
 
 # Add imports here
-from .dqm_client import *
+from .molecule import Molecule
 
 # Handle versioneer
 from ._version import get_versions
