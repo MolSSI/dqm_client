@@ -549,7 +549,7 @@ class Database(object):
 
         do_default = kwargs.pop("do_default", True)
         do_cp = kwargs.pop("do_cp", True)
-        do_vmfc = kwargs.pop("do_vmfc", True)
+        do_vmfc = kwargs.pop("do_vmfc", False)
         max_nbody = kwargs.pop("max_nbody", 0)
 
         if not isinstance(mol, molecule.Molecule):
@@ -593,15 +593,16 @@ class Database(object):
         # VMFC is a special beast
         if do_vmfc:
             raise KeyError("VMFC isnt quite ready for primetime!")
-        ret.update({"vmfc" + str(nbody): [] for nbody in range(1, max_nbody)})
-        nbody_range = list(range(1, max_nbody))
-        for nbody in nbody_range:
-            for cp_combos in it.combinations(fragment_range, nbody):
-                basis_tuple = tuple(cp_combos)
-                for interior_nbody in nbody_range:
-                    for x in it.combinations(cp_combos, interior_nbody):
-                        ghost = list(set(basis_tuple) - set(x))
-                        ret["vmfc" + str(interior_nbody)].append((mol.get_fragment(x, ghost), 1.0))
+
+            ret.update({"vmfc" + str(nbody): [] for nbody in range(1, max_nbody)})
+            nbody_range = list(range(1, max_nbody))
+            for nbody in nbody_range:
+                for cp_combos in it.combinations(fragment_range, nbody):
+                    basis_tuple = tuple(cp_combos)
+                    for interior_nbody in nbody_range:
+                        for x in it.combinations(cp_combos, interior_nbody):
+                            ghost = list(set(basis_tuple) - set(x))
+                            ret["vmfc" + str(interior_nbody)].append((mol.get_fragment(x, ghost), 1.0))
 
 
         # Add in the maximal position
