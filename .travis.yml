@@ -9,21 +9,6 @@ python:
     - 3.5
     - 3.6
 
-matrix:
-  include:
-    # Extra includes for OSX since python language is not available by default on OSX
-    - os: osx
-      language: generic
-      env: PYTHON_VER=2.7
-
-    - os: osx
-      language: generic
-      env: PYTHON_VER=3.5
-
-    - os: osx
-      language: generic
-      env: PYTHON_VER=3.6
-
 before_install:
   # Additional info about the build
   - uname -a

@@ -10,7 +10,7 @@ import pandas as pd
 
 from . import molecule
 from . import statistics
-from . import visualization
+# from . import visualization
 # from . import mongo_helper
 from . import constants
 from . import fields
@@ -343,7 +343,8 @@ class Database(object):
 
     # Visualization
     def ternary(self, cvals=None):
-        return visualization.Ternary2D(self.df, cvals=cvals)
+        raise Exception("MPL not avail")
+#        return visualization.Ternary2D(self.df, cvals=cvals)
 
     # Adders
     def parse_stoichiometry(self, stoichiometry):
