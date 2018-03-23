@@ -15,9 +15,11 @@ matrix:
     - os: osx
       language: generic
       env: PYTHON_VER=2.7
+
     - os: osx
       language: generic
       env: PYTHON_VER=3.5
+
     - os: osx
       language: generic
       env: PYTHON_VER=3.6
@@ -27,6 +29,7 @@ before_install:
   - uname -a
   - df -h
   - ulimit -a
+
   # Install Pip or Conda and dependencies
   - source devtools/travis-ci/install.sh
   - python -V
