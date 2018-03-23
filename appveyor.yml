@@ -1,0 +1,29 @@
+environment:
+
+  matrix:
+  
+    - PYTHON: "C:\\Python27-x64"
+      PYTHON_VERSION: "2.7"
+      PYTHON_ARCH: "64"
+
+    - PYTHON: "C:\\Python35-x64"
+      PYTHON_VERSION: "3.5"
+      PYTHON_ARCH: "64"
+
+    - PYTHON: "C:\\Python36-x64"
+      PYTHON_VERSION: "3.6"
+      PYTHON_ARCH: "64"
+  
+
+install:
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  
+  - pip install --upgrade pip setuptools
+  - pip install pytest pytest-cov codecov
+  - pip install -e .
+  
+
+build: false
+
+test_script:
+  - pytest -v --cov=dqm_client --cov-config setup.cfg dqm_client\\tests

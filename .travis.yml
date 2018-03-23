@@ -1,0 +1,47 @@
+language: python
+
+# Run jobs on container-based infrastructure, can be overridden per job
+sudo: false
+
+# Will only test on Linux be default, special includes are needed for OSX
+python:
+    - 2.7
+    - 3.5
+    - 3.6
+
+matrix:
+  include:
+    # Extra includes for OSX since python language is not available by default on OSX
+    - os: osx
+      language: generic
+      env: PYTHON_VER=2.7
+    - os: osx
+      language: generic
+      env: PYTHON_VER=3.5
+    - os: osx
+      language: generic
+      env: PYTHON_VER=3.6
+
+before_install:
+  # Additional info about the build
+  - uname -a
+  - df -h
+  - ulimit -a
+  # Install Pip or Conda and dependencies
+  - source devtools/travis-ci/install.sh
+  - python -V
+
+install:
+# Install the package locally
+
+  - pip install -e .
+
+
+script:
+  - pytest -v --cov=dqm_client --cov-config setup.cfg dqm_client/tests/
+
+notifications:
+    email: false
+
+after_success:
+  - codecov
