@@ -3,12 +3,9 @@ dqm_client
 A front-end client to DQM
 """
 
-# Make Python 2 and 3 imports work the same
-# Safe to remove with Python 3-only code
-from __future__ import absolute_import
-
 # Add imports here
 from .molecule import Molecule
+from .database import Database
 
 # Handle versioneer
 from ._version import get_versions
