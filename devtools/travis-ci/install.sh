@@ -14,8 +14,6 @@ if [ "$TRAVIS_OS_NAME" == "osx" ]; then
     eval "$(pyenv init -)"
 fi
 pip install --upgrade pip setuptools
-pip install numpy pandas requests
-pip install pytest pytest-cov codecov
 
 # Restore original directory
 popd

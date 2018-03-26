@@ -15,18 +15,24 @@ before_install:
   - df -h
   - ulimit -a
 
-  # Install Pip or Conda and dependencies
+  # Setup python environment
   - source devtools/travis-ci/install.sh
   - python -V
 
 install:
-# Install the package locally
 
+    # Install environment
+  - pip install numpy pandas requests
+
+    # Install testing infrastructure
+  - pip install pytest pytest-cov codecov
+
+    # Install the package locally
   - pip install -e .
 
 
 script:
-  - pytest -v --cov=dqm_client --cov-config setup.cfg dqm_client/tests/
+  - pytest -v --cov=dqm_client dqm_client/tests/
 
 notifications:
     email: false
