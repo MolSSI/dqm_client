@@ -28,7 +28,12 @@ def get_file_name(folder, filename=None):
     folder = _get_folder_path(folder) 
     if filename:
         folder = os.path.join(folder, filename)
-    return glob.glob(folder)
+
+    files = glob.glob(folder)
+    if len(files) == 1:
+        return files[0]
+    else:
+        return files
 
 
 def get_file(folder, *args):

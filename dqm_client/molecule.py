@@ -5,6 +5,7 @@ DQM Molecule object and helpers
 import numpy as np
 import itertools as it
 import re
+import os
 import math
 import hashlib
 import json
@@ -12,10 +13,11 @@ import json
 from . import constants
 from . import fields
 
-# 8 decimal places
+# Rounding
 GEOMETRY_NOISE = 8
+CHARGE_NOISE = 4
 
-class Molecule(object):
+class Molecule:
     """
     This is a Mongo QCDB molecule class.
     """
@@ -26,13 +28,15 @@ class Molecule(object):
         """
 
         self.symbols = []
+        self.geometry = None
+
+        self.custom_masses = False
         self.masses = []
         self.name = kwargs.pop("name", "")
+        self.comment = ""
         self.charge = 0.0
         self.multiplicity = 1
         self.real = []
-        self.comment = ""
-        self.geometry = None
         self.fragments = []
         self.fragment_charges = []
         self.fragment_multiplicities = []
@@ -56,6 +60,45 @@ class Molecule(object):
         else:
             # In case a user wants to build one themselves
             pass
+
+        if len(kwargs):
+            raise KeyError("Not all kwargs were correctly parsed, remaining: %s" % ", ".join(kwargs.keys()))
+
+    @classmethod
+    def from_file(cls, filename, dtype=None, orient=True):
+        """
+        Constructs a molecule object from a file.
+        """
+
+        ext = os.path.splitext(filename)[1]
+
+        if dtype is not None:
+            if ext in ["psimol"]:
+                dtype = "psi4"
+            elif ext in ["npy"]:
+                dtype = "numpy"
+            elif ext in ["json"]:
+                dtype = "json"
+            else:
+                raise KeyError("No dtype provided and ext '%s' not understood." % ext)
+        else:
+            dtype = "psi4"
+
+        if dtype == "psi4":
+            with open(filename, "r") as infile:
+                data = infile.read()
+        elif dtype == "numpy":
+            data = numpy.fromfile(filename)
+        elif dtype == "json":
+            with open(filename, "r") as infile:
+                data = json.loads(infile)
+        else:
+            raise KeyError("Dtype not understood '%s'." % dtype)
+
+
+        return cls(data, dtype=dtype, orient=orient)
+
+
 
     def _molecule_from_json(self, json_data):
         """
@@ -211,8 +254,11 @@ class Molecule(object):
 
                 self.symbols.append(atomSym)
                 zVal = constants.el2z[atomSym]
-                atomMass = constants.el2masses[atomSym] if atomm.group('mass') is None else float(
-                    atomm.group('mass'))
+                if atomm.group('mass') is None:
+                    atomMass = constants.el2masses[atomSym]
+                else:
+                    atomMass = float(atomm.group('mass'))
+                    self.custom_masses = True
                 self.masses.append(atomMass)
 
                 charge = float(zVal)
@@ -407,7 +453,8 @@ class Molecule(object):
 
         ret.geometry = np.vstack(geom_blocks)
 
-        ret.orient_molecule()
+        if orient:
+            ret.orient_molecule()
 
         return ret
 
