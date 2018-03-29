@@ -56,7 +56,7 @@ class Molecule:
                 self._molecule_from_string_psi4(mol_str)
             elif dtype == "numpy":
                 frags = kwargs.pop("frags", [])
-                self._molecule_from_numpy(mol_str, frags)
+                self._molecule_from_numpy(mol_str, frags, units=kwargs.pop("units", "angstrom"))
             elif dtype == "json":
                 self._molecule_from_json(mol_str)
             else:
@@ -115,7 +115,7 @@ class Molecule:
             else:
                 setattr(self, field, data)
 
-    def _molecule_from_numpy(self, arr, frags):
+    def _molecule_from_numpy(self, arr, frags, units="angstrom"):
         """
         Given a NumPy array of shape (N, 4) where each row is (Z_nuclear, X, Y, Z).
 
@@ -128,9 +128,16 @@ class Molecule:
         if arr.shape[1] != 4:
             raise AttributeError("Molecule: Molecule should be shape (N, 4) not %d." % arr.shape[1])
 
-        self.geometry = arr[:, 1:].copy() / constants.physconst["bohr2angstroms"]
-        self.symbols = [constants.z2el[x] for x in arr[:, 0]]
-        self.masses = [constants.z2masses[x] for x in arr[:, 0]]
+        if units == "bohr":
+            const = 1
+        elif units == "angstrom":
+            const = 1 / constants.physconst["bohr2angstroms"]
+        else:
+            raise KeyError("Unit '%s' not understood" % units)
+
+        self.geometry = arr[:, 1:].copy() * const
+        self.symbols = [constants.z2el[int(x)] for x in arr[:, 0]]
+        self.masses = [constants.z2masses[int(x)] for x in arr[:, 0]]
         self.real = [True for x in arr[:, 0]]
 
         if len(frags) and (frags[-1] != arr.shape[0]):
@@ -522,7 +529,7 @@ class Molecule:
         for field in fields.valid_fields["molecule"]:
             if field == "geometry":
                 tmp = np.around(getattr(self, field), GEOMETRY_NOISE)
-                tmp[np.abs(tmp) < 2.e-10] = 0
+                tmp[np.abs(tmp) < 2**(-(GEOMETRY_NOISE + 1))] = 0
                 ret[field] = tmp.tolist()
             else:
                 ret[field] = getattr(self, field)
