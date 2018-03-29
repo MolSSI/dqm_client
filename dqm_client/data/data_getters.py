@@ -6,17 +6,22 @@ import copy
 import glob
 import os
 
+from dqm_client.molecule import Molecule
+
+__all__ = ["list_directories", "get_file_name", "get_file", "get_molecule"]
+
 _data_dir = os.path.dirname(__file__)
 
 _folders = ["molecules"]
 _data_folders = {x: os.path.join(_data_dir, x) for x in _folders}
 
+
 def _get_folder_path(folder):
     if folder not in _data_folders:
         raise KeyError("Folder '%s' not recognized" % folder)
-    
+
     return _data_folders[folder]
-        
+
 
 def list_directories():
     """
@@ -24,8 +29,9 @@ def list_directories():
     """
     return copy.deepcopy(_data_folders.keys())
 
+
 def get_file_name(folder, filename=None):
-    folder = _get_folder_path(folder) 
+    folder = _get_folder_path(folder)
     if filename:
         folder = os.path.join(folder, filename)
 
@@ -37,7 +43,7 @@ def get_file_name(folder, filename=None):
 
 
 def get_file(folder, *args):
-    folder = _get_folder_path(folder) 
+    folder = _get_folder_path(folder)
     filename = os.path.join(folder, *args)
     if not os.path.isfile(filename):
         raise OSError("Path '%s' not found." % filename)
@@ -46,3 +52,9 @@ def get_file(folder, *args):
         ret = infile.read()
 
     return ret
+
+
+def get_molecule(name, orient=True):
+    folder = _get_folder_path("molecules")
+
+    return Molecule.from_file(os.path.join(folder, name), orient=orient)
