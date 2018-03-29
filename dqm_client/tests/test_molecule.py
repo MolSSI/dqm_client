@@ -3,22 +3,14 @@ import numpy as np
 import dqm_client as dqm
 from dqm_client import molecule
 
-from . import test_helper as th
-
-_water_dimer_minima_np = np.array([[8, -1.551007, -0.114520, 0.000000], [1, -1.934259, 0.762503, 0.000000],
-                                   [1, -0.599677, 0.040712, 0.000000], [8, 1.350625, 0.111469, 0.000000],
-                                   [1, 1.680398, -0.373741, -0.758561], [1, 1.680398, -0.373741, 0.758561]])
-
-_neon_tetramer_np = np.array([[10, 0.000000, 0.000000, 0.000000], [10, 3.100000, 0.000000, 0.000000],
-                              [10, 0.000000, 3.200000, 0.000000], [10, 0.000000, 0.000000, 3.300000]])
-_neon_tetramer_np[:, 1:] *= dqm.constants.physconst["bohr2angstroms"]
-
 
 def test_molecule_constructors():
 
     ### Water Dimer
     water_psi = dqm.data.get_molecule("water_dimer_minima.psimol")
-    water_from_np = molecule.Molecule(_water_dimer_minima_np, name="water dimer", dtype="numpy", frags=[3])
+    ele = np.array([8, 1, 1, 8, 1, 1]).reshape(-1, 1)
+    npwater = np.hstack((ele, water_psi.geometry))
+    water_from_np = molecule.Molecule(npwater, name="water dimer", dtype="numpy", frags=[3])
 
     assert water_psi.compare(water_psi, water_from_np)
 
@@ -28,7 +20,9 @@ def test_molecule_constructors():
 
     ### Neon Tetramer
     neon_from_psi = dqm.data.get_molecule("neon_tetramer.psimol")
-    neon_from_np = molecule.Molecule(_neon_tetramer_np, name="neon tetramer", dtype="numpy", frags=[1, 2, 3])
+    ele = np.array([10, 10, 10, 10]).reshape(-1, 1)
+    npneon = np.hstack((ele, neon_from_psi.geometry))
+    neon_from_np = molecule.Molecule(npneon, name="neon tetramer", dtype="numpy", frags=[1, 2, 3], units="bohr")
 
     assert water_psi.compare(neon_from_psi, neon_from_np)
 
