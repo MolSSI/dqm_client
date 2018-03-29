@@ -10,12 +10,12 @@ python:
     - 3.6
 
 before_install:
-  # Additional info about the build
+    # Additional info about the build
   - uname -a
   - df -h
   - ulimit -a
 
-  # Setup python environment
+    # Setup python environment
   - source devtools/travis-ci/install.sh
   - python -V
 

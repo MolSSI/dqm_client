@@ -7,15 +7,15 @@ import json
 
 ### Hash Fields
 hash_fields = {}
-hash_fields["molecule"] = ("symbols", "masses", "charge", "multiplicity", "real", "geometry",
-                           "fragments", "fragment_charges", "fragment_multiplicities")
+hash_fields["molecule"] = ("symbols", "masses", "charge", "multiplicity", "real", "geometry", "fragments",
+                           "fragment_charges", "fragment_multiplicities")
 hash_fields["database"] = ("name", )
-hash_fields["page"] = ("modelchem", "molecule_hash")
+hash_fields["page"] = ("modelchem", "molecule_hash", "options", "program")
 
 ### Valid Fields
 valid_fields = {}
 valid_fields["molecule"] = copy.deepcopy(hash_fields["molecule"])
-valid_fields["molecule"] = valid_fields["molecule"] + ("provenance", "comment")
+valid_fields["molecule"] = valid_fields["molecule"] + ("comment", "provenance")
 
 valid_fields["database"] = copy.deepcopy(hash_fields["database"])
 valid_fields["database"] = valid_fields["database"] + ("rxn_type", "provenance")
@@ -30,6 +30,7 @@ def get_hash(data, field_type):
         field_type = "database"
     elif (field_type == "pages"):
         field_type = "page"
+
     m = hashlib.sha1()
     concat = ""
     if field_type is None:
