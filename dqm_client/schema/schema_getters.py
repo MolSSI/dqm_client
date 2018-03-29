@@ -22,6 +22,13 @@ _schemas["molecule"] = molecule_schema
 # Load molecule schema
 
 
+def get_hash_fields():
+
+    if name not in _schemas:
+        raise KeyError("Schema name %s not found." % name)
+    return copy.deepcopy(_schemas[name]["hash_fields"])
+
+
 def get_schema(name):
     if name not in _schemas:
         raise KeyError("Schema name %s not found." % name)
