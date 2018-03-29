@@ -7,6 +7,8 @@ A front-end client to DQM
 from .molecule import Molecule
 from .database import Database
 
+from . import data
+
 # Handle versioneer
 from ._version import get_versions
 versions = get_versions()
