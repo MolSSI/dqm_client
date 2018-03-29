@@ -13,9 +13,11 @@ import json
 from . import constants
 from . import fields
 
-# Rounding
+# Rounding quantities for hashing
 GEOMETRY_NOISE = 8
+MASS_NOISE = 6
 CHARGE_NOISE = 4
+
 
 class Molecule:
     """
@@ -27,10 +29,10 @@ class Molecule:
         the Mongo QCDB molecule class which is capable of reading and writing many formats.
         """
 
+        # Layout all known attributes
         self.symbols = []
         self.geometry = None
 
-        self.custom_masses = False
         self.masses = []
         self.name = kwargs.pop("name", "")
         self.comment = ""
@@ -41,6 +43,11 @@ class Molecule:
         self.fragment_charges = []
         self.fragment_multiplicities = []
         self.provenance = {}
+
+        # List any flags
+        self._custom_masses = False
+        self._fix_com = True
+        self._fix_orientation = True
 
         # Figure out how and if we will parse the Molecule adata
         dtype = kwargs.pop("dtype", "psi4").lower()
@@ -95,10 +102,7 @@ class Molecule:
         else:
             raise KeyError("Dtype not understood '%s'." % dtype)
 
-
         return cls(data, dtype=dtype, orient=orient)
-
-
 
     def _molecule_from_json(self, json_data):
         """
@@ -110,7 +114,6 @@ class Molecule:
                 setattr(self, field, np.array(data, dtype=np.double))
             else:
                 setattr(self, field, data)
-
 
     def _molecule_from_numpy(self, arr, frags):
         """
@@ -158,8 +161,7 @@ class Molecule:
         cgmp = re.compile(r'^\s*(-?\d+)\s+(\d+)\s*$')
         frag = re.compile(r'^\s*--\s*$')
         ghost = re.compile(r'@(.*)|Gh\((.*)\)', re.IGNORECASE)
-        realNumber = re.compile(r"""[-+]?(?:(?:\d*\.\d+)|(?:\d+\.?))(?:[Ee][+-]?\d+)?""",
-                                re.VERBOSE)
+        realNumber = re.compile(r"""[-+]?(?:(?:\d*\.\d+)|(?:\d+\.?))(?:[Ee][+-]?\d+)?""", re.VERBOSE)
 
         lines = re.split('\n', text)
         glines = []
@@ -206,8 +208,7 @@ class Molecule:
                 glines.append(line)
             else:
                 raise TypeError(
-                    'Molecule:create_molecule_from_string: Unidentifiable line in geometry specification: %s'
-                    % (line))
+                    'Molecule:create_molecule_from_string: Unidentifiable line in geometry specification: %s' % (line))
 
         # catch last default fragment cgmp
         try:
@@ -243,14 +244,13 @@ class Molecule:
                 atomSym = atomm.group('symbol')
 
                 # We don't know whether the @C or Gh(C) notation matched. Do a quick check.
-                ghostAtom = False if (atomm.group('gh1') is None
-                                      and atomm.group('gh2') is None) else True
+                ghostAtom = False if (atomm.group('gh1') is None and atomm.group('gh2') is None) else True
 
                 # Check that the atom symbol is valid
                 if not atomSym in constants.el2z:
                     raise TypeError(
-                        'Molecule:create_molecule_from_string: Illegal atom symbol in geometry specification: %s'
-                        % (atomSym))
+                        'Molecule:create_molecule_from_string: Illegal atom symbol in geometry specification: %s' %
+                        (atomSym))
 
                 self.symbols.append(atomSym)
                 zVal = constants.el2z[atomSym]
@@ -258,7 +258,7 @@ class Molecule:
                     atomMass = constants.el2masses[atomSym]
                 else:
                     atomMass = float(atomm.group('mass'))
-                    self.custom_masses = True
+                    self._custom_masses = True
                 self.masses.append(atomMass)
 
                 charge = float(zVal)
@@ -272,28 +272,21 @@ class Molecule:
                     if realNumber.match(entries[1]):
                         xval = float(entries[1])
                     else:
-                        raise TypeError(
-                            "Molecule::create_molecule_from_string: Unidentifiable entry %s.",
-                            entries[1])
+                        raise TypeError("Molecule::create_molecule_from_string: Unidentifiable entry %s.", entries[1])
 
                     if realNumber.match(entries[2]):
                         yval = float(entries[2])
                     else:
-                        raise TypeError(
-                            "Molecule::create_molecule_from_string: Unidentifiable entry %s.",
-                            entries[2])
+                        raise TypeError("Molecule::create_molecule_from_string: Unidentifiable entry %s.", entries[2])
 
                     if realNumber.match(entries[3]):
                         zval = float(entries[3])
                     else:
-                        raise TypeError(
-                            "Molecule::create_molecule_from_string: Unidentifiable entry %s.",
-                            entries[3])
+                        raise TypeError("Molecule::create_molecule_from_string: Unidentifiable entry %s.", entries[3])
 
                     self.geometry.append([xval, yval, zval])
                 else:
-                    raise TypeError(
-                        'Molecule::create_molecule_from_string: Illegal geometry specification line : %s. \
+                    raise TypeError('Molecule::create_molecule_from_string: Illegal geometry specification line : %s. \
                         You should provide either Z-Matrix or Cartesian input' % (line))
 
                 iatom += 1
@@ -301,6 +294,28 @@ class Molecule:
         self.geometry = np.array(self.geometry) * unit_conversion
         self.fragments.append(list(range(tempfrag[0], tempfrag[-1] + 1)))
         self.real.extend([True for x in range(tempfrag[0], tempfrag[-1] + 1)])
+
+    def compare(self, other, bench=None):
+        """
+        Checks if two molecules are identical
+        """
+
+        if bench is None:
+            bench = self
+
+        match = True
+        match &= bench.symbols == other.symbols
+        if self._custom_masses or other._custom_masses:
+            match &= np.allclose(bench.masses, other.masses, atol=MASS_NOISE)
+        match &= np.equal(bench.real, other.real).all()
+        match &= np.equal(bench.fragments, other.fragments).all()
+        match &= np.allclose(bench.fragment_charges, other.fragment_charges, atol=CHARGE_NOISE)
+        match &= np.equal(bench.fragment_multiplicities, other.fragment_multiplicities).all()
+
+        match &= np.allclose(bench.charge, other.charge, atol=CHARGE_NOISE)
+        match &= np.equal(bench.multiplicity, other.multiplicity).all()
+        match &= np.allclose(bench.geometry, other.geometry, atol=GEOMETRY_NOISE)
+        return match
 
     def pretty_print(self):
         """Print the molecule in Angstroms. Same as :py:func:`print_out` only always in Angstroms.
@@ -317,8 +332,7 @@ class Molecule:
         for i in range(len(self.geometry)):
             text += """    %8s%4s """ % (self.symbols[i], "" if self.real[i] else "(Gh)")
             for j in range(3):
-                text += """  %17.12f""" % (self.geometry[i][j] *
-                                           constants.physconst["bohr2angstroms"])
+                text += """  %17.12f""" % (self.geometry[i][j] * constants.physconst["bohr2angstroms"])
             text += "\n"
         text += "\n"
 
@@ -373,7 +387,7 @@ class Molecule:
 
         phase_check = [False, False, False]
 
-        geom_noise = 10 ** (-GEOMETRY_NOISE)
+        geom_noise = 10**(-GEOMETRY_NOISE)
         for num in range(self.geometry.shape[0]):
 
             for x in range(3):
@@ -409,8 +423,8 @@ class Molecule:
         ret = Molecule(None, name=ret_name)
 
         if len(set(real) & set(ghost)):
-            raise TypeError("Molecule:get_fragment: real and ghost sets are overlaping! (%s, %s)." %
-                            (str(real), str(ghost)))
+            raise TypeError("Molecule:get_fragment: real and ghost sets are overlaping! (%s, %s)." % (str(real),
+                                                                                                      str(ghost)))
 
         geom_blocks = []
 
@@ -477,7 +491,7 @@ class Molecule:
         # append atoms and coordentries and fragment separators with charge and multiplicity
         for num, frag in enumerate(self.fragments):
             divider = "    --"
-            if num == 0 :
+            if num == 0:
                 divider = ""
 
             if any(self.real[at] for at in frag):
