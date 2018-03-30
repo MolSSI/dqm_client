@@ -66,6 +66,9 @@ class Molecule:
 
             if kwargs.pop("orient", True):
                 self.orient_molecule()
+
+            # Validate
+            self.validate()
         else:
             # In case a user wants to build one themselves
             pass
@@ -89,7 +92,7 @@ class Molecule:
 
     @geometry.setter
     def geometry(self, value):
-        self._geometry = np.array(value)
+        self._geometry = np.array(value).reshape(-1, 3)
 
     @property
     def masses(self):
@@ -341,13 +344,15 @@ class Molecule:
 
 ### Comparison and validation
 
-    def validate(self):
+    def validate(self, data=None):
         """
         Validates the current molecule for any errors
         """
 
-        tmp_json = self.to_json()
-        schema.validate(tmp_json, "molecule")
+        if data is None:
+            data = self.to_json()
+
+        schema.validate(data, "molecule")
 
     def compare(self, other, bench=None):
         """
@@ -596,14 +601,14 @@ class Molecule:
             data = getattr(self, field)
 
             # Do we add this data?
-            if isinstance(data, (np.ndarray, list, tuple)) and (len(data) == 0): continue
+            if isinstance(data, (np.ndarray, list, tuple, dict, str)) and (len(data) == 0): continue
 
             # If we added masses for orientation, continue
             if (field == "masses") and (self._custom_masses is False):
                 continue
 
             if field == "geometry":
-                ret[field] = hash_helpers.float_prep(data, GEOMETRY_NOISE).tolist()
+                ret[field] = hash_helpers.float_prep(data, GEOMETRY_NOISE).ravel().tolist()
             elif field == "fragment_charges":
                 ret[field] = hash_helpers.float_prep(data, CHARGE_NOISE).tolist()
             elif field == "charge":
@@ -613,6 +618,7 @@ class Molecule:
             else:
                 ret[field] = data
 
+        self.validate(data=ret)
         return ret
 
     def get_hash(self):
