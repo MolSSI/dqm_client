@@ -39,8 +39,6 @@ def test_water_minima_data():
     assert len(mol.to_string()) == 442
 
     assert sum(x == y for x, y in zip(mol.symbols, ['O', 'H', 'H', 'O', 'H', 'H'])) == mol.geometry.shape[0]
-    assert np.allclose(mol.masses,
-                       [15.99491461956, 1.00782503207, 1.00782503207, 15.99491461956, 1.00782503207, 1.00782503207])
     assert mol.name == "water dimer"
     assert mol.charge == 0
     assert mol.multiplicity == 1

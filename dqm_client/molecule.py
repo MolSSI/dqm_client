@@ -32,10 +32,10 @@ class Molecule:
         """
 
         # Layout all known attributes
-        self.symbols = []
-        self.geometry = None
+        self._symbols = []
+        self._geometry = None
 
-        self.masses = []
+        self._masses = []
         self.name = kwargs.pop("name", "")
         self.comment = ""
         self.charge = 0.0
@@ -73,7 +73,34 @@ class Molecule:
         if len(kwargs):
             raise KeyError("Not all kwargs were correctly parsed, remaining: %s" % ", ".join(kwargs.keys()))
 
+### Any needed setters and getters
 
+    @property
+    def symbols(self):
+        return self._symbols
+
+    @symbols.setter
+    def symbols(self, value):
+        self._symbols = value
+
+    @property
+    def geometry(self):
+        return self._geometry
+
+    @geometry.setter
+    def geometry(self, value):
+        self._geometry = np.array(value)
+
+    @property
+    def masses(self):
+        return self._masses
+
+    @masses.setter
+    def masses(self, value):
+        self._custom_masses = True
+        self._masses = value
+
+### Classmethods
 
     @classmethod
     def from_file(cls, filename, dtype=None, orient=True):
@@ -141,6 +168,7 @@ class Molecule:
 
         self.geometry = arr[:, 1:].copy() * const
         self.real = [True for x in arr[:, 0]]
+        self.symbols = [constants.z2el[x] for x in arr[:, 0]]
 
         if len(frags) and (frags[-1] != arr.shape[0]):
             frags.append(arr.shape[0])
@@ -232,8 +260,10 @@ class Molecule:
         tempfrag = []
         atomSym = ""
         atomLabel = ""
-        self.geometry = []
+        geometry = []
         tmpMass = []
+        symbols = []
+        custom_mass = False
 
         # handle number values
 
@@ -262,13 +292,13 @@ class Molecule:
                         'Molecule:create_molecule_from_string: Illegal atom symbol in geometry specification: %s' %
                         (atomSym))
 
-                self.symbols.append(atomSym)
+                symbols.append(atomSym)
                 zVal = constants.el2z[atomSym]
                 if atomm.group('mass') is None:
                     atomMass = constants.el2masses[atomSym]
                 else:
+                    custom_mass = True
                     atomMass = float(atomm.group('mass'))
-                    self._custom_masses = True
                 tmpMass.append(atomMass)
 
                 charge = float(zVal)
@@ -294,19 +324,30 @@ class Molecule:
                     else:
                         raise TypeError("Molecule::create_molecule_from_string: Unidentifiable entry %s.", entries[3])
 
-                    self.geometry.append([xval, yval, zval])
+                    geometry.append([xval, yval, zval])
                 else:
                     raise TypeError('Molecule::create_molecule_from_string: Illegal geometry specification line : %s. \
                         You should provide either Z-Matrix or Cartesian input' % (line))
 
                 iatom += 1
 
-        if self._custom_masses:
+        if custom_mass:
             self.masses = tmpMass
 
-        self.geometry = np.array(self.geometry) * unit_conversion
+        self.symbols = symbols
+        self.geometry = np.array(geometry) * unit_conversion
         self.fragments.append(list(range(tempfrag[0], tempfrag[-1] + 1)))
         self.real.extend([True for x in range(tempfrag[0], tempfrag[-1] + 1)])
+
+### Comparison and validation
+
+    def validate(self):
+        """
+        Validates the current molecule for any errors
+        """
+
+        tmp_json = self.to_json()
+        schema.validate(tmp_json, "molecule")
 
     def compare(self, other, bench=None):
         """
@@ -387,10 +428,15 @@ class Molecule:
 
         # Masses are needed for orientation
         if self._custom_masses is False:
+            print("Custom masses is False")
             np_mass = np.array([constants.el2masses[x] for x in self.symbols])
+            print(self.symbols)
+            print(np_mass)
         else:
             np_mass = np.array(self.masses)
 
+        print(self.geometry.shape)
+        print(np_mass.shape)
         # Center on Mass
         self.geometry -= np.average(self.geometry, axis=0, weights=np_mass)
 
@@ -436,8 +482,7 @@ class Molecule:
         elif ghost is None:
             ghost = []
 
-        # ret_name = self.name + " (" + str(real) + "," + str(ghost) + ")"
-        ret_name = self.name
+        ret_name = self.name + " (" + str(real) + "," + str(ghost) + ")"
         ret = Molecule(None, name=ret_name)
 
         if len(set(real) & set(ghost)):
@@ -445,6 +490,9 @@ class Molecule:
                                                                                                       str(ghost)))
 
         geom_blocks = []
+        symbols = []
+        masses = []
+        real_atoms = []
 
         # Loop through the real blocks
         frag_start = 0
@@ -453,9 +501,10 @@ class Molecule:
             geom_blocks.append(self.geometry[self.fragments[frag]])
 
             for idx in self.fragments[frag]:
-                ret.symbols.append(self.symbols[idx])
-                ret.masses.append(self.masses[idx])
-                ret.real.append(True)
+                symbols.append(self.symbols[idx])
+                real_atoms.append(True)
+                if self._custom_masses:
+                    masses.append(self.masses[idx])
 
             ret.fragments.append(list(range(frag_start, frag_start + frag_size)))
             frag_start += frag_size
@@ -473,9 +522,10 @@ class Molecule:
             geom_blocks.append(self.geometry[self.fragments[frag]])
 
             for idx in self.fragments[frag]:
-                ret.symbols.append(self.symbols[idx])
-                ret.masses.append(self.masses[idx])
-                ret.real.append(False)
+                symbols.append(self.symbols[idx])
+                real_atoms.append(False)
+                if self._custom_masses:
+                    masses.append(self.masses[idx])
 
             ret.fragments.append(list(range(frag_start, frag_start + frag_size)))
             frag_start += frag_size
@@ -483,7 +533,11 @@ class Molecule:
             ret.fragment_charges.append(self.fragment_charges[frag])
             ret.fragment_multiplicities.append(self.fragment_multiplicities[frag])
 
+        ret.symbols = symbols
         ret.geometry = np.vstack(geom_blocks)
+        ret.real = real_atoms
+        if self._custom_masses:
+            ret.masses = masses
 
         if orient:
             ret.orient_molecule()
