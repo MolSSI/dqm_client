@@ -10,7 +10,7 @@ import jsonschema
 from .definitions_schema import get_definition
 from .molecule_schema import molecule_schema
 
-__all__ = ["get_schema", "validate"]
+__all__ = ["get_schema", "validate", "get_hash_fields"]
 
 _schemas = {}
 
@@ -22,8 +22,7 @@ _schemas["molecule"] = molecule_schema
 # Load molecule schema
 
 
-def get_hash_fields():
-
+def get_hash_fields(name):
     if name not in _schemas:
         raise KeyError("Schema name %s not found." % name)
     return copy.deepcopy(_schemas[name]["hash_fields"])
