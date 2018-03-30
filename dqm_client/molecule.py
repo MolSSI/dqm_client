@@ -12,6 +12,8 @@ import json
 
 from . import constants
 from . import fields
+from . import schema
+from . import hash_helpers
 
 # Rounding quantities for hashing
 GEOMETRY_NOISE = 8
@@ -70,6 +72,8 @@ class Molecule:
 
         if len(kwargs):
             raise KeyError("Not all kwargs were correctly parsed, remaining: %s" % ", ".join(kwargs.keys()))
+
+
 
     @classmethod
     def from_file(cls, filename, dtype=None, orient=True):
@@ -136,8 +140,6 @@ class Molecule:
             raise KeyError("Unit '%s' not understood" % units)
 
         self.geometry = arr[:, 1:].copy() * const
-        self.symbols = [constants.z2el[int(x)] for x in arr[:, 0]]
-        self.masses = [constants.z2masses[int(x)] for x in arr[:, 0]]
         self.real = [True for x in arr[:, 0]]
 
         if len(frags) and (frags[-1] != arr.shape[0]):
@@ -231,6 +233,7 @@ class Molecule:
         atomSym = ""
         atomLabel = ""
         self.geometry = []
+        tmpMass = []
 
         # handle number values
 
@@ -266,7 +269,7 @@ class Molecule:
                 else:
                     atomMass = float(atomm.group('mass'))
                     self._custom_masses = True
-                self.masses.append(atomMass)
+                tmpMass.append(atomMass)
 
                 charge = float(zVal)
                 if ghostAtom:
@@ -297,6 +300,9 @@ class Molecule:
                         You should provide either Z-Matrix or Cartesian input' % (line))
 
                 iatom += 1
+
+        if self._custom_masses:
+            self.masses = tmpMass
 
         self.geometry = np.array(self.geometry) * unit_conversion
         self.fragments.append(list(range(tempfrag[0], tempfrag[-1] + 1)))
@@ -378,7 +384,12 @@ class Molecule:
         """
 
         # Get the mass as an array
-        np_mass = np.array(self.masses)
+
+        # Masses are needed for orientation
+        if self._custom_masses is False:
+            np_mass = np.array([constants.el2masses[x] for x in self.symbols])
+        else:
+            np_mass = np.array(self.masses)
 
         # Center on Mass
         self.geometry -= np.average(self.geometry, axis=0, weights=np_mass)
@@ -525,14 +536,28 @@ class Molecule:
         Returns a JSON form of the Molecule object.
         """
 
+        np.set_printoptions(precision=16)
         ret = {}
         for field in fields.valid_fields["molecule"]:
+            data = getattr(self, field)
+
+            # Do we add this data?
+            if isinstance(data, (np.ndarray, list, tuple)) and (len(data) == 0): continue
+
+            # If we added masses for orientation, continue
+            if (field == "masses") and (self._custom_masses is False):
+                continue
+
             if field == "geometry":
-                tmp = np.around(getattr(self, field), GEOMETRY_NOISE)
-                tmp[np.abs(tmp) < 2**(-(GEOMETRY_NOISE + 1))] = 0
-                ret[field] = tmp.tolist()
+                ret[field] = hash_helpers.float_prep(data, GEOMETRY_NOISE).tolist()
+            elif field == "fragment_charges":
+                ret[field] = hash_helpers.float_prep(data, CHARGE_NOISE).tolist()
+            elif field == "charge":
+                ret[field] = hash_helpers.float_prep(data, CHARGE_NOISE)
+            elif field == "masses":
+                ret[field] = hash_helpers.float_prep(data, MASS_NOISE).tolist()
             else:
-                ret[field] = getattr(self, field)
+                ret[field] = data
 
         return ret
 
@@ -545,7 +570,9 @@ class Molecule:
         concat = ""
 
         tmp_json = self.to_json()
-        for field in fields.hash_fields["molecule"]:
+        for field in schema.get_hash_fields("molecule"):
+            if field not in tmp_json:
+                continue
             concat += json.dumps(tmp_json[field])
 
         m.update(concat.encode("utf-8"))
