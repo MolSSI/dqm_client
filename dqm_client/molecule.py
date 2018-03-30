@@ -433,15 +433,10 @@ class Molecule:
 
         # Masses are needed for orientation
         if self._custom_masses is False:
-            print("Custom masses is False")
             np_mass = np.array([constants.el2masses[x] for x in self.symbols])
-            print(self.symbols)
-            print(np_mass)
         else:
             np_mass = np.array(self.masses)
 
-        print(self.geometry.shape)
-        print(np_mass.shape)
         # Center on Mass
         self.geometry -= np.average(self.geometry, axis=0, weights=np_mass)
 
