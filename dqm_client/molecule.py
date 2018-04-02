@@ -113,17 +113,15 @@ class Molecule:
 
         ext = os.path.splitext(filename)[1]
 
-        if dtype is not None:
-            if ext in ["psimol"]:
+        if dtype is None:
+            if ext in [".psimol"]:
                 dtype = "psi4"
-            elif ext in ["npy"]:
+            elif ext in [".npy"]:
                 dtype = "numpy"
-            elif ext in ["json"]:
+            elif ext in [".json"]:
                 dtype = "json"
             else:
                 raise KeyError("No dtype provided and ext '%s' not understood." % ext)
-        else:
-            dtype = "psi4"
 
         if dtype == "psi4":
             with open(filename, "r") as infile:
@@ -137,6 +135,8 @@ class Molecule:
             raise KeyError("Dtype not understood '%s'." % dtype)
 
         return cls(data, dtype=dtype, orient=orient)
+
+### Parsers
 
     def _molecule_from_json(self, json_data):
         """
@@ -400,6 +400,8 @@ class Molecule:
     def __repr__(self):
         return self.pretty_print()
 
+### Orientation methods
+
     def _inertial_tensor(self, geom, weight):
         """
         Compute the moment inertia tensor for a given geometry.
@@ -446,7 +448,7 @@ class Molecule:
 
         self.geometry = np.dot(self.geometry, evecs)
 
-        # Phases? Fuck it, lets do the simplest thing and ensure the first atom in each column
+        # Phases? Lets do the simplest thing and ensure the first atom in each column
         # that is not on a plane is positve
 
         phase_check = [False, False, False]
