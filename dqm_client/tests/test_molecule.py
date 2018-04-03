@@ -31,6 +31,8 @@ def test_molecule_constructors():
     assert water_psi.compare(neon_from_psi, neon_from_json)
 
 
+    assert water_psi.compare(molecule.Molecule(water_psi.to_string()))
+
 def test_water_minima_data():
     mol = dqm.data.get_molecule("water_dimer_minima.psimol")
     mol.name = "water dimer"

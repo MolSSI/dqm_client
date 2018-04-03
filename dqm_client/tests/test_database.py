@@ -9,28 +9,6 @@ from . import test_helper as th
 import dqm_client as dqm
 import pytest
 
-_water_dimer_minima = """
-0 1
-O  -1.551007  -0.114520   0.000000
-H  -1.934259   0.762503   0.000000
-H  -0.599677   0.040712   0.000000
---
-0 1
-O   1.350625   0.111469   0.000000
-H   1.680398  -0.373741  -0.758561
-H   1.680398  -0.373741   0.758561
-"""
-
-_neon_trimer = """
-Ne 0.000000 0.000000 0.000000
---
-Ne 3.000000 0.000000 0.000000
---
-Ne 0.000000 4.000000 0.000000
---
-Ne 0.000000 0.000000 5.000000
-"""
-
 
 def _compare_stoichs(stoich, stoich_other):
     mols = list(stoich)
@@ -64,7 +42,7 @@ def water_db():
     db = dqm.Database("Water Data")
 
     # Build the water dimer.
-    dimer = dqm.Molecule(_water_dimer_minima)
+    dimer = dqm.data.get_molecule("water_dimer_minima.psimol")
     frag_0 = dimer.get_fragment(0)
     frag_1 = dimer.get_fragment(1)
     frag_0_1 = dimer.get_fragment(0, 1)
@@ -77,18 +55,18 @@ def water_db():
         reaction_results={"Benchmark": -20.0,
                           "DFT": -10.0})
 
+    dimer_string = dimer.to_string()
     # Add single stoich from strings, not a valid set
     db.add_rxn(
-        "Water Dimer, dimer - str (invalid)", [(_water_dimer_minima, 1.0),
-                                               (_water_dimer_minima.splitlines()[-1], 0.0)],
+        "Water Dimer, dimer - str (invalid)", [(dimer_string, 1.0), (dimer_string.splitlines()[-5],
+                                                                            0.0)],
         attributes={"R": "Minima"},
         reaction_results={"Benchmark": -20.0,
                           "DFT": -10.0})
 
     # Add single stoich rxn via hashes
     db.add_rxn(
-        "Water Dimer, nocp - hash", [(dimer.get_hash(), 1.0), (frag_0.get_hash(), -1.0),
-                                     (frag_1.get_hash(), -1.0)],
+        "Water Dimer, nocp - hash", [(dimer.get_hash(), 1.0), (frag_0.get_hash(), -1.0), (frag_1.get_hash(), -1.0)],
         attributes={"R": "Minima"},
         reaction_results={"Benchmark": -5.0})
 
@@ -104,7 +82,7 @@ def water_db():
         },
         other_fields={"Something": "Other thing"})
 
-    db.add_ie_rxn("Water dimer", _water_dimer_minima)
+    db.add_ie_rxn("Water dimer", dimer.to_string())
 
     return db
 
@@ -114,7 +92,7 @@ def water_db():
 def nbody_db():
     db = dqm.Database("N-Body Data")
 
-    dimer = dqm.Molecule(_water_dimer_minima, name="Water Dimer")
+    dimer = dqm.data.get_molecule("water_dimer_minima.psimol")
     frag_0 = dimer.get_fragment(0)
     frag_1 = dimer.get_fragment(1)
     frag_0_1 = dimer.get_fragment(0, 1)
@@ -127,8 +105,8 @@ def nbody_db():
         "default": [(dimer, 1.0)],
     })
 
-    db.add_ie_rxn("Water Dimer", _water_dimer_minima)
-    db.add_ie_rxn("Ne Tetramer", _neon_trimer)
+    db.add_ie_rxn("Water Dimer", dimer.to_string())
+    db.add_ie_rxn("Ne Tetramer", dqm.data.get_molecule("neon_tetramer.psimol"))
 
     # Ne Tetramer benchmark
     db.ne_stoich = {
@@ -206,7 +184,6 @@ def nbody_db():
     return db
 
 
-
 # Test conventional add
 def test_rxn_add(water_db):
 
@@ -230,16 +207,7 @@ def test_nbody_rxn(nbody_db):
     water_stoich = nbody_db.get_rxn("Water Dimer")
     _compare_rxn_stoichs(water_stoich, water_stoich_bench)
 
-    bench_vals = {
-        "default1": 1,
-        "cp1": 4,
-        "default2": 6,
-        "cp2": 10,
-        "default3": 10,
-        "cp3": 14,
-        "default": 1,
-        "cp": 1
-    }
+    bench_vals = {"default1": 1, "cp1": 4, "default2": 6, "cp2": 10, "default3": 10, "cp3": 14, "default": 1, "cp": 1}
     # Check some basics
     for key in list(nbody_db.ne_stoich["stoichiometry"]):
         assert bench_vals[key] == len(nbody_db.ne_stoich["stoichiometry"][key])
@@ -249,4 +217,3 @@ def test_nbody_rxn(nbody_db):
     mh = list(ne_stoich["stoichiometry"]["default"])[0]
     # print(ne_stoich)
     # _compare_rxn_stoichs(nbody_db.ne_stoich, ne_stoich)
-
