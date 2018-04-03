@@ -223,6 +223,14 @@ class Molecule:
             elif ang.match(line):
                 pass
 
+            # Handle com
+            elif line.lower().strip() in ["no_com", "nocom"]:
+                self._fix_com = True
+
+            # handle orient
+            elif line.lower().strip() in ["no_reorient", "noreorient"]:
+                self._fix_orientation = True
+
             # handle charge and multiplicity
             elif cgmp.match(line):
                 tempCharge = int(cgmp.match(line).group(1))
