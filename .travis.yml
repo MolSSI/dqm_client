@@ -16,7 +16,7 @@ before_install:
   - ulimit -a
 
     # Setup python environment
-  - source devtools/travis-ci/install.sh
+  - source devtools/travis-ci/before_install.sh
   - python -V
 
 install:
