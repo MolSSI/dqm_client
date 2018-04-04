@@ -22,7 +22,7 @@ before_install:
 install:
 
     # Install environment
-  - pip install numpy pandas requests
+  - pip install numpy pandas requests jsonschema
 
     # Install testing infrastructure
   - pip install pytest pytest-cov codecov

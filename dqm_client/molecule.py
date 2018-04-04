@@ -52,7 +52,7 @@ class Molecule:
         self._fix_orientation = True
 
         # Figure out how and if we will parse the Molecule adata
-        dtype = kwargs.pop("dtype", None).lower()
+        dtype = kwargs.pop("dtype", "psi4").lower()
         if mol_str is not None:
             if dtype == "psi4":
                 self._molecule_from_string_psi4(mol_str)
