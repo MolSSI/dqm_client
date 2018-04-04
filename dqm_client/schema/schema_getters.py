@@ -17,6 +17,7 @@ _schemas = {}
 # Add in molecule
 for req in molecule_schema["requied_definitions"]:
     molecule_schema["definitions"][req] = get_definition(req)
+
 _schemas["molecule"] = molecule_schema
 
 # Load molecule schema

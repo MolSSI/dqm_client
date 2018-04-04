@@ -52,7 +52,7 @@ class Molecule:
         self._fix_orientation = True
 
         # Figure out how and if we will parse the Molecule adata
-        dtype = kwargs.pop("dtype", "psi4").lower()
+        dtype = kwargs.pop("dtype", None).lower()
         if mol_str is not None:
             if dtype == "psi4":
                 self._molecule_from_string_psi4(mol_str)
@@ -594,6 +594,10 @@ class Molecule:
         text += "    no_reorient\n"
 
         return text
+
+    @classmethod
+    def from_json(cls, data, orient=True):
+        return cls(data, dtype="json", orient=orient)
 
     def to_json(self):
         """
