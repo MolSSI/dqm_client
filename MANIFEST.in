@@ -1,4 +1,5 @@
 recursive-include dqm_client *.py
+recursive-include dqm_client *.schema
 
 include setup.py
 include README.md

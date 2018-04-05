@@ -3,16 +3,17 @@ Assists in grabbing the requisite data
 """
 
 import copy
+import json
 import glob
 import os
 
 from dqm_client.molecule import Molecule
 
-__all__ = ["list_directories", "get_file_name", "get_file", "get_molecule"]
+__all__ = ["list_directories", "get_file_name", "get_file", "get_molecule", "get_options"]
 
 _data_dir = os.path.dirname(__file__)
 
-_folders = ["molecules"]
+_folders = ["molecules", "options"]
 _data_folders = {x: os.path.join(_data_dir, x) for x in _folders}
 
 
@@ -55,6 +56,22 @@ def get_file(folder, *args):
 
 
 def get_molecule(name, orient=True):
+    """
+    Returns a Molecule object from the available stored objects.
+    """
     folder = _get_folder_path("molecules")
 
     return Molecule.from_file(os.path.join(folder, name), orient=orient)
+
+
+def get_options(name):
+    """
+    Returns a default options dictionary
+    """
+    folder = _get_folder_path("options")
+    if ".json" not in name:
+        name += ".json"
+
+    with open(os.path.join(folder, name), "r") as infile:
+        ret = json.load(infile)
+    return ret
