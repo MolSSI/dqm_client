@@ -15,11 +15,12 @@ setup(
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     license='BSD-3-Clause',
-    packages=['dqm_client', "dqm_client.tests"],
+    #packages=['dqm_client', "dqm_client.tests", "dqm_client.data", "dqm_client.schema"],
     # Optional include package data to ship with your package
-    package_data={
-        'dqm_client': []  # + ["data/*.dat"]
-    },
+    #package_data={
+    #    'dqm_client': ["dqm_client/data/*.json"]
+    #},
+    include_package_data=True,
     install_requires=["numpy"],
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     # author_email='me@place.org',      # Author email

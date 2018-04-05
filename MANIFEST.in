@@ -1,5 +1,7 @@
 recursive-include dqm_client *.py
 recursive-include dqm_client *.schema
+recursive-include dqm_client *.psimol
+recursive-include dqm_client *.json
 
 include setup.py
 include README.md

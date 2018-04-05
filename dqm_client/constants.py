@@ -1,6 +1,5 @@
 """
 Elemental masses (most common isotope), symbols, atomic numbers, and physical constants from psi4.
-
 """
 
 
