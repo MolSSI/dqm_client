@@ -1,4 +1,8 @@
+"""
+Tets the inports and exports of the Molecule object.
+"""
 import numpy as np
+import pytest
 
 import dqm_client as dqm
 from dqm_client import molecule
@@ -106,3 +110,11 @@ def test_water_orient():
 
     # Ghost fragments should prevent overlap
     assert frag_0_1.get_hash() != frag_1_0.get_hash()
+
+def test_molecule_errors():
+    mol = dqm.data.get_molecule("water_dimer_stretch.psimol")
+
+    data = mol.to_json()
+    data["whatever"] = 5
+    with pytest.raises(ValueError):
+        dqm.schema.validate(data, "molecule")
