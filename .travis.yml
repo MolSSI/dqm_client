@@ -5,7 +5,6 @@ sudo: false
 
 # Will only test on Linux be default, special includes are needed for OSX
 python:
-    - 2.7
     - 3.5
     - 3.6
 
