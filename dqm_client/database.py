@@ -240,8 +240,12 @@ class Database(object):
 
         return True
 
-    def compute(self, keys, stoich="default", options={}, program="psi4", other_fields={}, ignore_db_type=False):
+    def compute(self, keys, stoich="default", options=None, program="psi4", other_fields=None, ignore_db_type=False):
 
+        if options is None:
+            options = {}
+        if other_fields is None:
+            other_fields = {}
         if self.client is None:
             raise AttributeError("DataBase: Compute: Client was not set.")
 
@@ -429,7 +433,7 @@ class Database(object):
 
         return ret
 
-    def add_rxn(self, name, stoichiometry, reaction_results={}, attributes={}, other_fields={}):
+    def add_rxn(self, name, stoichiometry, reaction_results=None, attributes=None, other_fields=None):
         """
         Adds a reaction to a database object.
 
@@ -447,6 +451,12 @@ class Database(object):
         --------
 
         """
+        if reaction_results is None:
+            reaction_results = {}
+        if attributes is None:
+            attributes = {}
+        if other_fields is None:
+            other_fields = {}
         rxn = {}
 
         # Set name
@@ -489,7 +499,7 @@ class Database(object):
 
         if "default" in list(reaction_results):
             rxn["reaction_results"] = reaction_results
-        elif isinstance(reaction_results, (dict)):
+        elif isinstance(reaction_results, dict):
             rxn["reaction_results"] = {}
             rxn["reaction_results"]["default"] = reaction_results
         else:

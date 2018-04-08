@@ -256,7 +256,7 @@ class Molecule:
                 glines.append(line)
             else:
                 raise TypeError(
-                    'Molecule:create_molecule_from_string: Unidentifiable line in geometry specification: %s' % (line))
+                    'Molecule:create_molecule_from_string: Unidentifiable line in geometry specification: %s' % line)
 
         # catch last default fragment cgmp
         try:
@@ -301,7 +301,7 @@ class Molecule:
                 if not atomSym in constants.el2z:
                     raise TypeError(
                         'Molecule:create_molecule_from_string: Illegal atom symbol in geometry specification: %s' %
-                        (atomSym))
+                        atomSym)
 
                 symbols.append(atomSym)
                 zVal = constants.el2z[atomSym]
@@ -338,7 +338,7 @@ class Molecule:
                     geometry.append([xval, yval, zval])
                 else:
                     raise TypeError('Molecule::create_molecule_from_string: Illegal geometry specification line : %s. \
-                        You should provide either Z-Matrix or Cartesian input' % (line))
+                        You should provide either Z-Matrix or Cartesian input' % line)
 
                 iatom += 1
 
@@ -469,11 +469,11 @@ class Molecule:
 
                 val = self.geometry[num, x]
 
-                if (abs(val) < geom_noise): continue
+                if abs(val) < geom_noise: continue
 
                 phase_check[x] = True
 
-                if (val < 0):
+                if val < 0:
                     self.geometry[:, x] *= -1
 
             if sum(phase_check) == 3:
