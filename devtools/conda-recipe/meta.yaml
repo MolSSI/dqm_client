@@ -7,21 +7,31 @@ source:
 
 build:
   number: 0
+  script: python setup.py install --single-version-externally-managed --record=record.txt
 
 requirements:
   build:
     - python
     - setuptools
+  host:
+    - numpy
 
   run:
     - python
-    - numpy
+    - {{ pin_compatible(‘numpy’) }}
+    - pandas
+    - requests
+    - jsonschema
 
 test:
   requires:
     - pytest
   imports:
     - dqm_client
+  source_files:
+    - dqm_client/tests
+  commands:
+    - py.test -v
 
 about:
   home: add_url_here
