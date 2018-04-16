@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 
 import dqm_client as dqm
-from dqm_client import molecule
 
 
 def test_molecule_constructors():
@@ -14,28 +13,28 @@ def test_molecule_constructors():
     water_psi = dqm.data.get_molecule("water_dimer_minima.psimol")
     ele = np.array([8, 1, 1, 8, 1, 1]).reshape(-1, 1)
     npwater = np.hstack((ele, water_psi.geometry))
-    water_from_np = molecule.Molecule(npwater, name="water dimer", dtype="numpy", frags=[3])
+    water_from_np = dqm.Molecule(npwater, name="water dimer", dtype="numpy", frags=[3])
 
     assert water_psi.compare(water_psi, water_from_np)
 
     # Check the JSON construct/deconstruct
-    water_from_json = molecule.Molecule(water_psi.to_json(), dtype="json")
+    water_from_json = dqm.Molecule(water_psi.to_json(), dtype="json")
     assert water_psi.compare(water_psi, water_from_json)
 
     ### Neon Tetramer
     neon_from_psi = dqm.data.get_molecule("neon_tetramer.psimol")
     ele = np.array([10, 10, 10, 10]).reshape(-1, 1)
     npneon = np.hstack((ele, neon_from_psi.geometry))
-    neon_from_np = molecule.Molecule(npneon, name="neon tetramer", dtype="numpy", frags=[1, 2, 3], units="bohr")
+    neon_from_np = dqm.Molecule(npneon, name="neon tetramer", dtype="numpy", frags=[1, 2, 3], units="bohr")
 
     assert water_psi.compare(neon_from_psi, neon_from_np)
 
     # Check the JSON construct/deconstruct
-    neon_from_json = molecule.Molecule(neon_from_psi.to_json(), dtype="json")
+    neon_from_json = dqm.Molecule(neon_from_psi.to_json(), dtype="json")
     assert water_psi.compare(neon_from_psi, neon_from_json)
 
 
-    assert water_psi.compare(molecule.Molecule(water_psi.to_string()))
+    assert water_psi.compare(dqm.Molecule(water_psi.to_string()))
 
 def test_water_minima_data():
     mol = dqm.data.get_molecule("water_dimer_minima.psimol")
